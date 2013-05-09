@@ -498,6 +498,7 @@ void reset(void) {
 	object *nextObject;
 	// removes asteroids
 	while (asteroids != NULL) {
+      
 		vSpriteDelete(asteroids->handle);
 		nextObject = asteroids->next;
 		vPortFree(asteroids);
@@ -572,7 +573,7 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
       newAsteroid->vel.y = y;
       newAsteroid->angle = angle;
       newAsteroid->a_vel = avel;
-      newAsteroid->size = sizeToPix(size);
+      newAsteroid->size = size;
       
       newAsteroid->next = asteroids;
       
@@ -639,8 +640,8 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
 	
 	newBullet->handle = xSpriteCreate(
 	"bullet.png",			   //reference to png filename
-	x,          //xPos
-	y,          //yPos
+	x,                      //xPos
+	y,                      //yPos
 	0,                      //rAngle
 	BULLET_SIZE,			   //width
 	BULLET_SIZE,			   //height
