@@ -163,9 +163,12 @@ void bulletTask(void *vParam) {
 	xLastWakeTime = xTaskGetTickCount();
     while (1) {
 		if(SHOOT_BUTTON) {
+         
+         xSemaphoreTake(usartMutex, portMAX_DELAY);
 			bullets = createBullet(ship.pos.x, ship.pos.y, ship.vel.x + BULLET_VEL, ship.vel.y + BULLET_VEL, bullets);
+			xSemaphoreGive(usartMutex);
 						
-			vTaskDelay((BULLET_LIFE_MS/2)/portTICK_RATE_MS);
+			vTaskDelay((BULLET_DELAY_MS)/portTICK_RATE_MS);
 		}
 			
 		vTaskDelayUntil(&xLastWakeTime, FRAME_DELAY_MS / portTICK_RATE_MS);
@@ -191,9 +194,9 @@ void updateTask(void *vParam) {
 		// spin ship
 		ship.angle += ship.a_vel;
 		if (ship.angle >= 360)
-		    ship.angle -= 360;
+         ship.angle -= 360;
 		else if (ship.angle < 0)
-		    ship.angle += 360;
+		   ship.angle += 360;
 		
 		// move ship
 		ship.vel.x += ship.accel * -sin(ship.angle * DEG_TO_RAD);
@@ -241,23 +244,23 @@ void updateTask(void *vParam) {
 				}
 				xSemaphoreGive(usartMutex);
 			} else {
-			    objIter->pos.x += objIter->vel.x;
-			    objIter->pos.y += objIter->vel.y;
-			
-			    if (objIter->pos.x < 0.0) {
-				    objIter->pos.x += SCREEN_W;
-			    } else if (objIter->pos.x > SCREEN_W) {
-				    objIter->pos.x -= SCREEN_W;
-			    }
-			
-			    if (objIter->pos.y < 0.0) {
-				    objIter->pos.y += SCREEN_H;
-			    } else if (objIter->pos.y > SCREEN_H) {
-				    objIter->pos.y -= SCREEN_H;
-			    }
-			
-			    objPrev = objIter;
-			    objIter = objIter->next;
+            objIter->pos.x += objIter->vel.x;
+            objIter->pos.y += objIter->vel.y;
+
+            if (objIter->pos.x < 0.0) {
+             objIter->pos.x += SCREEN_W;
+            } else if (objIter->pos.x > SCREEN_W) {
+             objIter->pos.x -= SCREEN_W;
+            }
+
+            if (objIter->pos.y < 0.0) {
+             objIter->pos.y += SCREEN_H;
+            } else if (objIter->pos.y > SCREEN_H) {
+             objIter->pos.y -= SCREEN_H;
+            }
+
+            objPrev = objIter;
+            objIter = objIter->next;
 			}			
 		}
 		
@@ -265,28 +268,27 @@ void updateTask(void *vParam) {
         /* 
          * ToDo: Add code to move the asteroids
          */
-      objPrev = NULL;
+		objPrev = NULL;
 		objIter = asteroids;
 		while (objIter != NULL) {
-          objIter->pos.x += objIter->vel.x;
-          objIter->pos.y += objIter->vel.y;
+			objIter->pos.x += objIter->vel.x;
+			objIter->pos.y += objIter->vel.y;
       
-          if (objIter->pos.x < 0.0) {
-             objIter->pos.x += SCREEN_W;
-          } else if (objIter->pos.x > SCREEN_W) {
-             objIter->pos.x -= SCREEN_W;
-          }
+			if (objIter->pos.x < 0.0) {
+				objIter->pos.x += SCREEN_W;
+			} else if (objIter->pos.x > SCREEN_W) {
+				objIter->pos.x -= SCREEN_W;
+			}
       
-          if (objIter->pos.y < 0.0) {
-             objIter->pos.y += SCREEN_H;
-          } else if (objIter->pos.y > SCREEN_H) {
-             objIter->pos.y -= SCREEN_H;
-          }
+			if (objIter->pos.y < 0.0) {
+				objIter->pos.y += SCREEN_H;
+			} else if (objIter->pos.y > SCREEN_H) {
+				objIter->pos.y -= SCREEN_H;
+			}
       
-          objPrev = objIter;
-          objIter = objIter->next;
-      }
-		
+			objPrev = objIter;
+			objIter = objIter->next;
+		}
 		vTaskDelay(FRAME_DELAY_MS / portTICK_RATE_MS);
 	}
 }
@@ -360,10 +362,9 @@ void drawTask(void *vParam) {
 						astIter = astIter->next;
 					}
 				}
-				
 			} else {
 				objPrev = objIter;
-			    objIter = objIter->next;
+			   objIter = objIter->next;
 			}			
 		}
 		
@@ -380,9 +381,9 @@ void drawTask(void *vParam) {
 			vTaskSuspend(inputTaskHandle);
 			
 			if (asteroids == NULL)
-			    handle = xSpriteCreate("win.png", SCREEN_W>>1, SCREEN_H>>1, 20, SCREEN_W>>1, SCREEN_H>>1, 100);
+			   handle = xSpriteCreate("win.png", SCREEN_W>>1, SCREEN_H>>1, 20, SCREEN_W>>1, SCREEN_H>>1, 100);
 			else
-			    handle = xSpriteCreate("lose.png", SCREEN_W>>1, SCREEN_H>>1, 0, SCREEN_W>>1, SCREEN_H>>1, 100);
+			   handle = xSpriteCreate("lose.png", SCREEN_W>>1, SCREEN_H>>1, 0, SCREEN_W>>1, SCREEN_H>>1, 100);
 				
 			vTaskDelay(3000 / portTICK_RATE_MS);
 			vSpriteDelete(handle);
@@ -420,7 +421,7 @@ int main(void) {
 	vTaskStartScheduler();
 	
 	for (;;)
-	    ;
+      ;
 	return 0;
 }
 
@@ -444,17 +445,26 @@ void init(void) {
 	astGroup = xGroupCreate();
 	
 	for (i = 0; i < INITIAL_ASTEROIDS; i++) {
-		asteroids = createAsteroid(getRandStartPosVal(SCREEN_W >> 1),
-		                           getRandStartPosVal(SCREEN_H >> 1),
-		                           (rand() % (int8_t)(AST_MAX_VEL_3 * 10)) / 5.0 - AST_MAX_VEL_3,
-								   (rand() % (int8_t)(AST_MAX_VEL_3 * 10)) / 5.0 - AST_MAX_VEL_3,
-								   rand() % 360,
-								   (rand() % (int8_t)(AST_MAX_AVEL_3 * 10)) / 5.0 - AST_MAX_AVEL_3,
-								   3,
-								   asteroids);
+		asteroids = createAsteroid(
+         getRandStartPosVal(SCREEN_W >> 1),
+         getRandStartPosVal(SCREEN_H >> 1),
+         (rand() % (int8_t)(AST_MAX_VEL_3 * 10)) / 5.0 - AST_MAX_VEL_3,
+         (rand() % (int8_t)(AST_MAX_VEL_3 * 10)) / 5.0 - AST_MAX_VEL_3,
+         rand() % 360,
+         (rand() % (int8_t)(AST_MAX_AVEL_3 * 10)) / 5.0 - AST_MAX_AVEL_3,
+         3,
+         asteroids);
 	}
 	
-	ship.handle = xSpriteCreate("ship.png", SCREEN_W >> 1, SCREEN_H >> 1, 0, SHIP_SIZE, SHIP_SIZE, 1);
+	ship.handle = xSpriteCreate(
+      "ship.png", 
+      SCREEN_W >> 1,
+      SCREEN_H >> 1, 
+      0, 
+      SHIP_SIZE, 
+      SHIP_SIZE, 
+      1);
+   
 	ship.pos.x = SCREEN_W >> 1;
 	ship.pos.y = SCREEN_H >> 1;
 	ship.vel.x = 0;
@@ -486,10 +496,9 @@ void reset(void) {
      *	}
      */
 	object *nextObject;
-	// removes asteriods
+	// removes asteroids
 	while (asteroids != NULL) {
 		vSpriteDelete(asteroids->handle);
-		vGroupRemoveSprite(astGroup, asteroids->handle);
 		nextObject = asteroids->next;
 		vPortFree(asteroids);
 		asteroids = nextObject;
@@ -516,7 +525,7 @@ void reset(void) {
  * return: A safe, pseudorandom coordinate value.
  *----------------------------------------------------------------------------*/
 int16_t getRandStartPosVal(int16_t dimOver2) {
-	return rand() % (dimOver2 - DEAD_ZONE_OVER_2) + (rand() % 2) * (dimOver2 + DEAD_ZONE_OVER_2);
+   return rand() % (dimOver2 - DEAD_ZONE_OVER_2) + (rand() % 2) * (dimOver2 + DEAD_ZONE_OVER_2);
 }
 
 /*------------------------------------------------------------------------------
@@ -550,31 +559,33 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
       
       newAsteroid->handle = xSpriteCreate(
          astImages[rand() % 3],  //reference to png filename
-         SCREEN_W >> 1,          //xPos
-         SCREEN_H >> 1,          //yPos
-         0,                      //rAngle
+         x,          //xPos
+         y,          //yPos
+         angle,                      //rAngle
          sizeToPix(size),        //width
          sizeToPix(size),        //height
          1);                     //depth
       
       newAsteroid->pos.x = x;
       newAsteroid->pos.y = y;
-      
       newAsteroid->vel.x = x;
       newAsteroid->vel.y = y;
-      
       newAsteroid->angle = angle;
-      
       newAsteroid->a_vel = avel;
-      
-      newAsteroid->size = size;
+      newAsteroid->size = sizeToPix(size);
       
       newAsteroid->next = asteroids;
-	  
-	  vGroupAddSprite(astGroup, newAsteroid->handle);
       
-      // newAsteroid->life = NULL;
-      // newAsteroid->accel = NULL;
+      //xSpriteHandle handle;
+      //point pos;
+      //point vel;
+      //float accel;
+      //int16_t angle;
+      //int8_t a_vel;
+      //uint8_t size;
+      //uint16_t life;
+      //struct object_s *next;
+      vGroupAddSprite(astGroup, newAsteroid->handle);
       
       return newAsteroid;
 }
@@ -620,29 +631,30 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
 	/* ToDo:
      * Create a new bullet object using a reentrant malloc() function
      * Setup the pointers in the linked list using:
-     bullet->next = nxt;
+     * bullet->next = nxt;
      * Create a new sprite using xSpriteCreate()
      */
 	 
-   object *new_bullet = pvPortMalloc(sizeof(object));
+   object *newBullet = pvPortMalloc(sizeof(object));
 	
-	new_bullet->handle = xSpriteCreate(
-	"bullet.png",  //reference to png filename
-	SCREEN_W >> 1,          //xPos
-	SCREEN_H >> 1,          //yPos
+	newBullet->handle = xSpriteCreate(
+	"bullet.png",			   //reference to png filename
+	x,          //xPos
+	y,          //yPos
 	0,                      //rAngle
-	BULLET_SIZE,        //width
-	BULLET_SIZE,        //height
+	BULLET_SIZE,			   //width
+	BULLET_SIZE,			   //height
 	1);                     //depth
 
-   new_bullet->pos.x = x;
-   new_bullet->pos.y = y;
-   new_bullet->vel.x = velx;
-   new_bullet->vel.y = vely;
-   new_bullet->next = nxt;
+   newBullet->pos.x = x;
+   newBullet->pos.y = y;
+   newBullet->vel.x = velx;
+   newBullet->vel.y = vely;
+   newBullet->size = BULLET_SIZE;
+   newBullet->life = BULLET_LIFE_MS;
+   newBullet->next = nxt;
 
-   //xSpriteCreate("bullet.png",(uint16_t)new_bullet->pos.x ,(uint16_t)new_bullet->pos.y, 0, BULLET_SIZE, BULLET_SIZE, 1);
-   return (new_bullet); 
+   return (newBullet); 
 }
 
 /*------------------------------------------------------------------------------
@@ -677,14 +689,16 @@ void spawnAsteroid(point *pos, uint8_t size) {
             accel = AST_MAX_AVEL_3;
             break;
       }
-      asteroids = createAsteroid(
-         pos->x,                                         //x pos
-         pos->y,                                         //y pos
-         (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //x vel
-         (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //y vel
-         rand() % 360,                                   //angle
-         (rand() % (int8_t)(accel * 10)) / 5.0 - accel,  //accel
-         size - 1,                                       //size
-         asteroids);                                     //next asteroid
+		for(int i = 0; i < 3; i++) {
+         asteroids = createAsteroid(
+            pos->x,                                         //x pos
+            pos->y,                                         //y pos
+            (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //x vel
+            (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //y vel
+            rand() % 360,                                   //angle
+            (rand() % (int8_t)(accel * 10)) / 5.0 - accel,  //accel
+            size - 1,                                       //size
+            asteroids);                                     //next asteroid
+      }
    }
-}
+}																																		
