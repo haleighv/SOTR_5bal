@@ -1,4 +1,4 @@
-croutine.d croutine.o: .././croutine.c ../../../Source/include/FreeRTOS.h \
+usart.d usart.o: .././usart.c ../../../Source/include/FreeRTOS.h \
  c:\program\ files\atmel\atmel\ studio\ 6.0\extensions\atmel\avrgcc\3.4.1.95\avrtoolchain\bin\../lib/gcc/avr/4.6.2/include/stddef.h \
  ../../../Source/include/projdefs.h \
  ../../../Source/include/FreeRTOSConfig.h \
@@ -15,8 +15,10 @@ croutine.d croutine.o: .././croutine.c ../../../Source/include/FreeRTOS.h \
  c:\program\ files\atmel\atmel\ studio\ 6.0\extensions\atmel\avrgcc\3.4.1.95\avrtoolchain\bin\../lib/gcc/avr/4.6.2/../../../../avr/include/avr/fuse.h \
  c:\program\ files\atmel\atmel\ studio\ 6.0\extensions\atmel\avrgcc\3.4.1.95\avrtoolchain\bin\../lib/gcc/avr/4.6.2/../../../../avr/include/avr/lock.h \
  ../../../Source/include/portable.h ../../../Source/portable/portmacro.h \
- ../../../Source/include/mpu_wrappers.h ../../../Source/include/task.h \
- ../../../Source/include/list.h ../../../Source/include/croutine.h
+ ../../../Source/include/mpu_wrappers.h ../../../Source/include/semphr.h \
+ ../../../Source/include/queue.h \
+ c:\program\ files\atmel\atmel\ studio\ 6.0\extensions\atmel\avrgcc\3.4.1.95\avrtoolchain\bin\../lib/gcc/avr/4.6.2/../../../../avr/include/stdlib.h \
+ .././usart.h
 
 ../../../Source/include/FreeRTOS.h:
 
@@ -56,8 +58,10 @@ c:\program\ files\atmel\atmel\ studio\ 6.0\extensions\atmel\avrgcc\3.4.1.95\avrt
 
 ../../../Source/include/mpu_wrappers.h:
 
-../../../Source/include/task.h:
+../../../Source/include/semphr.h:
 
-../../../Source/include/list.h:
+../../../Source/include/queue.h:
 
-../../../Source/include/croutine.h:
+c:\program\ files\atmel\atmel\ studio\ 6.0\extensions\atmel\avrgcc\3.4.1.95\avrtoolchain\bin\../lib/gcc/avr/4.6.2/../../../../avr/include/stdlib.h:
+
+.././usart.h:
