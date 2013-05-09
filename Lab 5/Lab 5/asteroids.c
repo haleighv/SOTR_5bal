@@ -125,18 +125,18 @@ void spawnAsteroid(point *pos, uint8_t size);
  *
  * param vParam: This parameter is not used.
  *----------------------------------------------------------------------------*/
-void USART_Write_Task(void *vParam) {
-	uint8_t uart_data;
-	portBASE_TYPE xStatus;
-	
-    while (1) {
-		xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
-		if( xStatus == pdPASS )
-		{
-			USART_Write_Unprotected(uart_data);
-		}
-	}
-}
+//void USART_Write_Task(void *vParam) {
+	//uint8_t uart_data;
+	//portBASE_TYPE xStatus;
+	//
+    //while (1) {
+		//xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
+		//if( xStatus == pdPASS )
+		//{
+			//USART_Write_Unprotected(uart_data);
+		//}
+	//}
+//}
 
 
 /*------------------------------------------------------------------------------
@@ -442,7 +442,7 @@ int main(void) {
 	xTaskCreate(bulletTask, (signed char *) "b", 130, NULL, 2, &bulletTaskHandle);
 	xTaskCreate(updateTask, (signed char *) "u", 200, NULL, 4, &updateTaskHandle);
 	xTaskCreate(drawTask, (signed char *) "d", 230, NULL, 3, NULL);
-	xTaskCreate(USART_Write_Task, (signed char *) "w", 1500, NULL, 5, NULL);
+	//xTaskCreate(USART_Write_Task, (signed char *) "w", 1500, NULL, 5, NULL);
 	
 	vTaskStartScheduler();
 	
