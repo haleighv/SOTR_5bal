@@ -570,6 +570,8 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
       newAsteroid->size = size;
       
       newAsteroid->next = asteroids;
+	  
+	  vGroupAddSprite(astGroup, newAsteroid->handle);
       
       // newAsteroid->life = NULL;
       // newAsteroid->accel = NULL;
