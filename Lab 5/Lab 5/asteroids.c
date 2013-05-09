@@ -625,6 +625,15 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
      */
 	 
    object *new_bullet = pvPortMalloc(sizeof(object));
+	
+	new_bullet->handle = xSpriteCreate(
+	"bullet.png",  //reference to png filename
+	SCREEN_W >> 1,          //xPos
+	SCREEN_H >> 1,          //yPos
+	0,                      //rAngle
+	BULLET_SIZE,        //width
+	BULLET_SIZE,        //height
+	1);                     //depth
 
    new_bullet->pos.x = x;
    new_bullet->pos.y = y;
@@ -632,7 +641,7 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
    new_bullet->vel.y = vely;
    new_bullet->next = nxt;
 
-   xSpriteCreate("bullet.png",(uint16_t)new_bullet->pos.x ,(uint16_t)new_bullet->pos.y, 0, BULLET_SIZE, BULLET_SIZE, 1);
+   //xSpriteCreate("bullet.png",(uint16_t)new_bullet->pos.x ,(uint16_t)new_bullet->pos.y, 0, BULLET_SIZE, BULLET_SIZE, 1);
    return (new_bullet); 
 }
 
