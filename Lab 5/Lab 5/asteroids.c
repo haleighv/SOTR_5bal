@@ -485,7 +485,24 @@ void reset(void) {
      *		thisObject = nextObject
      *	}
      */
-	 
+	object *nextObject;
+	// removes asteriods
+	while (asteroids != NULL) {
+		vSpriteDelete(asteroids->handle);
+		vGroupRemoveSprite(astGroup, asteroids->handle);
+		nextObject = asteroids->next;
+		vPortFree(asteroids);
+		asteroids = nextObject;
+	}
+	vGroupDelete(astGroup);
+	
+	// removes bullets
+	while (bullets != NULL) {
+   	vSpriteDelete(bullets->handle);
+   	nextObject = bullets->next;
+   	vPortFree(bullets);
+   	bullets = nextObject;
+	}
 }
 
 /*------------------------------------------------------------------------------
