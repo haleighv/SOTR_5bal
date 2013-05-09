@@ -78,7 +78,7 @@
                                                                     // Use 1000Hz to get mSec timing.
 
 //	#define configCPU_CLOCK_HZ		( ( uint32_t ) F_CPU)			// This define set by Eclipse environment
-	#define configCPU_CLOCK_HZ		( ( uint32_t ) 2000000 )		// Arduino Mega2560 Rev3
+	#define configCPU_CLOCK_HZ		( ( uint32_t ) 16000000 )		// Arduino Mega2560 Rev3
 
 
 //	XRAM device options. Different methods of enabling and driving.    MegaRAM only implemented for two banks of 56kByte currently.
@@ -175,7 +175,7 @@
 // And on to the things the same no matter the AVR type...
 #define configUSE_PREEMPTION		    1
 #define configUSE_IDLE_HOOK		        0
-#define configUSE_TICK_HOOK		        1
+#define configUSE_TICK_HOOK		        0
 #define configMAX_PRIORITIES		    ( ( unsigned portBASE_TYPE ) 4 )
 #define configMINIMAL_STACK_SIZE	    ( ( uint16_t ) 85 )
 #define configMAX_TASK_NAME_LEN		    ( 16 )

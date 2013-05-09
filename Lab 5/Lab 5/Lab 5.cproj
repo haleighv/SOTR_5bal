@@ -95,19 +95,7 @@
     <Compile Include="heap_2.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="init.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="init.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="croutine.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="heap_1.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="lab4_main.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="list.c">
@@ -117,12 +105,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="queue.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="spi_sseg.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="spi_sseg.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="tasks.c">

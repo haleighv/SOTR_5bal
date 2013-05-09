@@ -47,7 +47,7 @@ void USART_Write(uint8_t data) {
 		while ( !( UCSR0A & (1<<UDRE0)) )
 		;
 		/* Put data into buffer, sends the data */
-		UDR0 = nextByte;
+		UDR0 = data;
 }
 
 /*the send function will put 8bits on the trans line. */
