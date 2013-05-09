@@ -64,7 +64,7 @@ typedef struct object_s {
 
 #define DEAD_ZONE_OVER_2 120
 
-#define FRAME_DELAY_MS  10
+#define FRAME_DELAY_MS  50
 #define BULLET_DELAY_MS 500
 #define BULLET_LIFE_MS  1000
 
@@ -156,11 +156,11 @@ void inputTask(void *vParam) {
 	
     while (1) {
 		if(LEFT_BUTTON)
-		ship.a_vel = -SHIP_AVEL;
+		   ship.a_vel = -SHIP_AVEL;
 		if(RIGHT_BUTTON)
-		ship.a_vel = SHIP_AVEL;
+		   ship.a_vel = SHIP_AVEL;
 		if(ACCEL_BUTTON)
-		ship.accel = ship.accel + SHIP_ACCEL;
+		   ship.accel = ship.accel + SHIP_ACCEL;
 	}
 }
 
@@ -538,6 +538,8 @@ void reset(void) {
    	vPortFree(bullets);
    	bullets = nextObject;
 	}
+   
+   vSpriteDelete(ship.handle);
 }
 
 /*------------------------------------------------------------------------------
@@ -581,6 +583,19 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
      * Add new asteroid to the group "astGroup" using:
      *	vGroupAddSprite() 
      */
+      char *debug;
+      int d1 = velx;            // Get the integer part (678).
+      float f2 = velx - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
+      //int d2 = trunc(f2 * 10000);   // Turn into integer (123).
+      int d2 = (int)(f2 * 10000); // Or this one: Turn into integer.
+
+      // Print as parts, note that you need 0-padding for fractional bit.
+      // Since d1 is 678 and d2 is 123, you get "678.0123".
+      sprintf (debug, "velx = %d.%04d\n", d1, d2);
+      
+      //sprintf(debug, "velx: %d.%d, vely: %d.%d", (int)velx, ,vely);
+      vPrint(debug);
+      
       object *newAsteroid = pvPortMalloc(sizeof(object));
       
       newAsteroid->handle = xSpriteCreate(
@@ -594,8 +609,8 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
       
       newAsteroid->pos.x = x;
       newAsteroid->pos.y = y;
-      newAsteroid->vel.x = x;
-      newAsteroid->vel.y = y;
+      newAsteroid->vel.x = 1;
+      newAsteroid->vel.y = 0;
       newAsteroid->angle = angle;
       newAsteroid->a_vel = avel;
       newAsteroid->size = size;
