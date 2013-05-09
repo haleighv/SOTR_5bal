@@ -42,19 +42,19 @@ void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
 }
 
 /*the send function will put 8bits on the trans line. */
-void USART_Write(uint8_t data) {
-		/* Wait for empty transmit buffer */
-		while ( !( UCSR0A & (1<<UDRE0)) )
-		;
-		/* Put data into buffer, sends the data */
-		UDR0 = data;
+void USART_Write(uint8_t data)
+{
+	xQueueSendToBack( xQueue, &data, portMAX_DELAY);
+	/* Wait for empty transmit buffer */
+	//while ( !( UCSR0A & (1<<UDRE0)) );
+	/* Put data into buffer, sends the data */
+	//UDR0 = data;
 }
 
 /*the send function will put 8bits on the trans line. */
 void USART_Write_Unprotected(uint8_t data) {
 	/* Wait for empty transmit buffer */
-	while ( !( UCSR0A & (1<<UDRE0)) )
-	;
+	while ( !( UCSR0A & (1<<UDRE0)) );
 	/* Put data into buffer, sends the data */
 	UDR0 = data;
 }
@@ -67,8 +67,7 @@ istheredata() function to check before calling this function
 */
 uint8_t USART_Read(void) {
     /* Wait for data to be received */
-    while ( !(UCSR0A & (1<<RXC0)) )
-        ;
+    while ( !(UCSR0A & (1<<RXC0)) );
     /* Get and return received data from buffer */
     return UDR0;
 }

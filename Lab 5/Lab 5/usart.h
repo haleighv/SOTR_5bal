@@ -8,7 +8,7 @@
 * Authors: Doug Gallatin and Jason Schray
 *
 ***************************/
-
+#include "shares.h"
 
 #ifndef USART_H_
 #define USART_H_

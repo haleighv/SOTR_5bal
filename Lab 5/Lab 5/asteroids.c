@@ -30,6 +30,8 @@
 
 #include "graphics.h"
 #include "usart.h"
+#include "shares.h"
+
 
 const char *astImages[] = {
 	"a1.png",
@@ -87,16 +89,18 @@ typedef struct object_s {
 #define AST_MAX_AVEL_2 6.0
 #define AST_MAX_AVEL_1 9.0
 
-#define LEFT_BUTTON  _BV(PB7)
-#define RIGHT_BUTTON _BV(PB6)
-#define ACCEL_BUTTON _BV(PB1)
-#define SHOOT_BUTTON _BV(PB0)
+#define LEFT_BUTTON  !(PINB & _BV(PB7))
+#define RIGHT_BUTTON !(PINB & _BV(PB6))
+#define ACCEL_BUTTON !(PINB & _BV(PB1))
+#define SHOOT_BUTTON !(PINB & _BV(PB0))
 
 static xTaskHandle inputTaskHandle;
 static xTaskHandle bulletTaskHandle;
 static xTaskHandle updateTaskHandle;
 
 static xSemaphoreHandle usartMutex;
+xQueueHandle xQueue;
+
 
 static object ship;
 static object *bullets = NULL;
@@ -112,6 +116,28 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
 uint16_t sizeToPix(int8_t size);
 object *createBullet(float x, float y, float velx, float vely, object *nxt);
 void spawnAsteroid(point *pos, uint8_t size);
+
+
+/*------------------------------------------------------------------------------
+ * Function: USART_Write_Task
+ *
+ * Description: Sends queued data over UART
+ *
+ * param vParam: This parameter is not used.
+ *----------------------------------------------------------------------------*/
+void USART_Write_Task(void *vParam) {
+	uint8_t uart_data;
+	portBASE_TYPE xStatus;
+	
+    while (1) {
+		xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
+		if( xStatus == pdPASS )
+		{
+			USART_Write_Unprotected(uart_data);
+		}
+	}
+}
+
 
 /*------------------------------------------------------------------------------
  * Function: inputTask
@@ -130,11 +156,11 @@ void inputTask(void *vParam) {
 	
     while (1) {
 		if(LEFT_BUTTON)
-			ship.vel.x = ship.vel.x - SHIP_AVEL;
+		ship.a_vel = -SHIP_AVEL;
 		if(RIGHT_BUTTON)
-			ship.vel.x = ship.vel.x + SHIP_AVEL;
+		ship.a_vel = SHIP_AVEL;
 		if(ACCEL_BUTTON)
-			ship.accel = ship.accel + SHIP_ACCEL;
+		ship.accel = ship.accel + SHIP_ACCEL;
 	}
 }
 
@@ -162,17 +188,15 @@ void bulletTask(void *vParam) {
 	// Initialize the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
     while (1) {
-		if(SHOOT_BUTTON) {
-         
-         xSemaphoreTake(usartMutex, portMAX_DELAY);
-			bullets = createBullet(ship.pos.x, ship.pos.y, ship.vel.x + BULLET_VEL, ship.vel.y + BULLET_VEL, bullets);
-			xSemaphoreGive(usartMutex);
-						
-			vTaskDelay((BULLET_DELAY_MS)/portTICK_RATE_MS);
-		}
-			
-		vTaskDelayUntil(&xLastWakeTime, FRAME_DELAY_MS / portTICK_RATE_MS);
-	}
+	    if(SHOOT_BUTTON) {
+		    xSemaphoreTake(usartMutex, portMAX_DELAY);
+		    bullets = createBullet(ship.pos.x, ship.pos.y, ship.vel.x + BULLET_VEL, ship.vel.y + BULLET_VEL, bullets);
+		    xSemaphoreGive(usartMutex);
+		    vTaskDelay((BULLET_LIFE_MS/2)/portTICK_RATE_MS);
+	    }
+	    
+	    vTaskDelayUntil(&xLastWakeTime, FRAME_DELAY_MS / portTICK_RATE_MS);
+    }
 }
 
 /*------------------------------------------------------------------------------
@@ -407,6 +431,8 @@ int main(void) {
 	TCCR2A = _BV(CS00); 
 	
 	usartMutex = xSemaphoreCreateMutex();
+	xQueue = xQueueCreate( 1024, sizeof( uint8_t ));
+	
 	
 	vWindowCreate(SCREEN_W, SCREEN_H);
 	
@@ -416,12 +442,11 @@ int main(void) {
 	xTaskCreate(bulletTask, (signed char *) "b", 130, NULL, 2, &bulletTaskHandle);
 	xTaskCreate(updateTask, (signed char *) "u", 200, NULL, 4, &updateTaskHandle);
 	xTaskCreate(drawTask, (signed char *) "d", 230, NULL, 3, NULL);
-	//xTaskCreate(USART_Write_Task, (signed char *) "w", 150, NULL, 5, NULL);
+	xTaskCreate(USART_Write_Task, (signed char *) "w", 1500, NULL, 5, NULL);
 	
 	vTaskStartScheduler();
 	
-	for (;;)
-      ;
+	for(;;);
 	return 0;
 }
 
