@@ -156,11 +156,16 @@ void inputTask(void *vParam) {
 	
     while (1) {
 		if(LEFT_BUTTON)
-		ship.a_vel = -SHIP_AVEL;
-		if(RIGHT_BUTTON)
-		ship.a_vel = SHIP_AVEL;
+			ship.a_vel = +SHIP_AVEL;
+		else if(RIGHT_BUTTON)
+			ship.a_vel = -SHIP_AVEL;
+		else
+			ship.a_vel = 0;
+			
 		if(ACCEL_BUTTON)
-		ship.accel = ship.accel + SHIP_ACCEL;
+			ship.accel = SHIP_ACCEL;
+		else
+			 ship.accel =0;
 	}
 }
 
