@@ -87,16 +87,19 @@ typedef struct object_s {
 #define AST_MAX_AVEL_2 6.0
 #define AST_MAX_AVEL_1 9.0
 
-#define LEFT_BUTTON  _BV(PB7)
-#define RIGHT_BUTTON _BV(PB6)
-#define ACCEL_BUTTON _BV(PB1)
-#define SHOOT_BUTTON _BV(PB0)
+#define LEFT_BUTTON  !(PINB & _BV(PB7))
+#define RIGHT_BUTTON !(PINB & _BV(PB6))
+#define ACCEL_BUTTON !(PINB & _BV(PB1))
+#define SHOOT_BUTTON !(PINB & _BV(PB0))
 
 static xTaskHandle inputTaskHandle;
 static xTaskHandle bulletTaskHandle;
 static xTaskHandle updateTaskHandle;
 
 static xSemaphoreHandle usartMutex;
+xSemaphoreHandle usartMutex2;
+xQueueHandle xQueue;
+
 
 static object ship;
 static object *bullets = NULL;
