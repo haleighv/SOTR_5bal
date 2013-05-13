@@ -19,7 +19,7 @@
 
 
 #include "usart.h"
-
+#include "shares.h"
 /************************************
 * Procedure: usart_init
 *  
@@ -29,6 +29,9 @@
 * Param buadin: The desired Baud rate.
 * Param clk_seedin: The clk speed of the ATmega328p
 ************************************/
+
+xQueueHandle xQueue;
+
 void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
     uint32_t ubrr = clk_speedin/(16UL)/baudin-1;
     UBRR0H = (unsigned char)(ubrr>>8) ;// & 0x7F;
@@ -39,16 +42,17 @@ void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
     UCSR0C = (1<<UCSZ01)|(1<<UCSZ00);
 	// clear U2X0 for Synchronous operation
     UCSR0A &= ~(1<<U2X0);
+	xQueue = xQueueCreate( 100, sizeof( uint8_t ));
 }
 
 /*the send function will put 8bits on the trans line. */
 void USART_Write(uint8_t data)
 {
-	//xQueueSendToBack( xQueue, &data, portMAX_DELAY);
+	xQueueSendToBack( xQueue, &data, 0);
 	/* Wait for empty transmit buffer */
-	while ( !( UCSR0A & (1<<UDRE0)) );
+	//while ( !( UCSR0A & (1<<UDRE0)) );
 	/* Put data into buffer, sends the data */
-	UDR0 = data;
+	//UDR0 = data;
 }
 
 /*the send function will put 8bits on the trans line. */
@@ -70,4 +74,28 @@ uint8_t USART_Read(void) {
     while ( !(UCSR0A & (1<<RXC0)) );
     /* Get and return received data from buffer */
     return UDR0;
+}
+
+
+
+/*------------------------------------------------------------------------------
+ * Function: USART_Write_Task
+ *
+ * Description: Sends queued data over UART
+ *
+ * param vParam: This parameter is not used.
+ *----------------------------------------------------------------------------*/
+void USART_Write_Task(void *vParam) {
+	uint8_t uart_data;
+	portBASE_TYPE xStatus;
+	
+    while (1) {
+		xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
+
+			/* Wait for empty transmit buffer */
+			while ( !( UCSR0A & (1<<UDRE0)) );
+			/* Put data into buffer, sends the data */
+			UDR0 = uart_data;
+			//USART_Write_Unprotected(uart_data);
+	}
 }

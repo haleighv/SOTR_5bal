@@ -64,7 +64,7 @@ typedef struct object_s {
 
 #define DEAD_ZONE_OVER_2 120
 
-#define FRAME_DELAY_MS  50
+#define FRAME_DELAY_MS  10
 #define BULLET_DELAY_MS 500
 #define BULLET_LIFE_MS  1000
 
@@ -99,7 +99,7 @@ static xTaskHandle bulletTaskHandle;
 static xTaskHandle updateTaskHandle;
 
 static xSemaphoreHandle usartMutex;
-xQueueHandle xQueue;
+
 
 
 static object ship;
@@ -118,25 +118,6 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt);
 void spawnAsteroid(point *pos, uint8_t size);
 
 
-/*------------------------------------------------------------------------------
- * Function: USART_Write_Task
- *
- * Description: Sends queued data over UART
- *
- * param vParam: This parameter is not used.
- *----------------------------------------------------------------------------*/
-//void USART_Write_Task(void *vParam) {
-	//uint8_t uart_data;
-	//portBASE_TYPE xStatus;
-	//
-    //while (1) {
-		//xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
-		//if( xStatus == pdPASS )
-		//{
-			//USART_Write_Unprotected(uart_data);
-		//}
-	//}
-//}
 
 
 /*------------------------------------------------------------------------------
@@ -192,15 +173,21 @@ void bulletTask(void *vParam) {
 
 	// Initialize the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
+	
+	
     while (1) {
 	    if(SHOOT_BUTTON) {
 		    xSemaphoreTake(usartMutex, portMAX_DELAY);
-		    bullets = createBullet(ship.pos.x, ship.pos.y, ship.vel.x + BULLET_VEL, ship.vel.y + BULLET_VEL, bullets);
-		    xSemaphoreGive(usartMutex);
-		    vTaskDelay((BULLET_LIFE_MS/2)/portTICK_RATE_MS);
+		    //bullets = createBullet(ship.pos.x, + (SHIP_SIZE/2)*-sin(ship.angle * DEG_TO_RAD), ship.pos.y + (SHIP_SIZE/2)*-cos(ship.angle*DEG_TO_RAD), -sin(ship.angle*DEG_TO_RAD)*BULLET_VEL, -cos(ship.angle*DEG_TO_RAD)*BULLET_VEL, bullets);
+		    bullets = createBullet(ship.pos.x, ship.pos.y, -sin(ship.angle*DEG_TO_RAD)*BULLET_VEL, -cos(ship.angle*DEG_TO_RAD)*BULLET_VEL, bullets);
+		    
+			//bullets = createBullet(ship.pos.x, ship.pos.y, ship.vel.x, ship.vel.y, bullets);
+			xSemaphoreGive(usartMutex);
+		    vTaskDelay(BULLET_DELAY_MS/portTICK_RATE_MS);
 	    }
-	    
-	    vTaskDelayUntil(&xLastWakeTime, FRAME_DELAY_MS / portTICK_RATE_MS);
+		else
+	        //vTaskDelayUntil(&xLastWakeTime, FRAME_DELAY_MS / portTICK_RATE_MS);
+			vTaskDelay(FRAME_DELAY_MS / portTICK_RATE_MS);
     }
 }
 
@@ -436,7 +423,7 @@ int main(void) {
 	TCCR2A = _BV(CS00); 
 	
 	usartMutex = xSemaphoreCreateMutex();
-	xQueue = xQueueCreate( 1024, sizeof( uint8_t ));
+	
 	
 	
 	vWindowCreate(SCREEN_W, SCREEN_H);
@@ -444,10 +431,10 @@ int main(void) {
 	sei();
 	
 	xTaskCreate(inputTask, (signed char *) "i", 80, NULL, 1, &inputTaskHandle);
-	xTaskCreate(bulletTask, (signed char *) "b", 130, NULL, 2, &bulletTaskHandle);
+	xTaskCreate(bulletTask, (signed char *) "b", 250, NULL, 2, &bulletTaskHandle);
 	xTaskCreate(updateTask, (signed char *) "u", 200, NULL, 4, &updateTaskHandle);
 	xTaskCreate(drawTask, (signed char *) "d", 230, NULL, 3, NULL);
-	//xTaskCreate(USART_Write_Task, (signed char *) "w", 1500, NULL, 5, NULL);
+	xTaskCreate(USART_Write_Task, (signed char *) "w", 150, NULL, 5, NULL);
 	
 	vTaskStartScheduler();
 	
@@ -545,6 +532,7 @@ void reset(void) {
 	}
    
    vSpriteDelete(ship.handle);
+   vSpriteDelete(background);
 }
 
 /*------------------------------------------------------------------------------
@@ -588,18 +576,18 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
      * Add new asteroid to the group "astGroup" using:
      *	vGroupAddSprite() 
      */
-      char *debug;
-      int d1 = velx;            // Get the integer part (678).
-      float f2 = velx - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
-      //int d2 = trunc(f2 * 10000);   // Turn into integer (123).
-      int d2 = (int)(f2 * 10000); // Or this one: Turn into integer.
-
-      // Print as parts, note that you need 0-padding for fractional bit.
-      // Since d1 is 678 and d2 is 123, you get "678.0123".
-      sprintf (debug, "velx = %d.%04d\n", d1, d2);
-      
-      //sprintf(debug, "velx: %d.%d, vely: %d.%d", (int)velx, ,vely);
-      vPrint(debug);
+      //char *debug;
+      //int d1 = velx;            // Get the integer part (678).
+      //float f2 = velx - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
+      ////int d2 = trunc(f2 * 10000);   // Turn into integer (123).
+      //int d2 = (int)(f2 * 10000); // Or this one: Turn into integer.
+//
+      //// Print as parts, note that you need 0-padding for fractional bit.
+      //// Since d1 is 678 and d2 is 123, you get "678.0123".
+      //sprintf (debug, "velx = %d.%04d\n", d1, d2);
+      //
+      ////sprintf(debug, "velx: %d.%d, vely: %d.%d", (int)velx, ,vely);
+      //vPrint(debug);
       
       object *newAsteroid = pvPortMalloc(sizeof(object));
       
@@ -614,8 +602,8 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
       
       newAsteroid->pos.x = x;
       newAsteroid->pos.y = y;
-      newAsteroid->vel.x = 1;
-      newAsteroid->vel.y = 0;
+      newAsteroid->vel.x = velx;
+      newAsteroid->vel.y = vely;
       newAsteroid->angle = angle;
       newAsteroid->a_vel = avel;
       newAsteroid->size = size;
@@ -684,12 +672,12 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
    object *newBullet = pvPortMalloc(sizeof(object));
 	
 	newBullet->handle = xSpriteCreate(
-	"bullet.png",			   //reference to png filename
+	"bullet.png",			//reference to png filename
 	x,                      //xPos
 	y,                      //yPos
 	0,                      //rAngle
-	BULLET_SIZE,			   //width
-	BULLET_SIZE,			   //height
+	BULLET_SIZE,			//width
+	BULLET_SIZE,			//height
 	1);                     //depth
 
    newBullet->pos.x = x;
@@ -697,7 +685,7 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
    newBullet->vel.x = velx;
    newBullet->vel.y = vely;
    newBullet->size = BULLET_SIZE;
-   newBullet->life = BULLET_LIFE_MS;
+   newBullet->life = 0;
    newBullet->next = nxt;
 
    return (newBullet); 
