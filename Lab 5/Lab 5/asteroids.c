@@ -690,32 +690,34 @@ void spawnAsteroid(point *pos, uint8_t size) {
      */
    int vel, accel;
    
-   //spawn 3 new asteroids
-	for(int i = 0; i < 3; i++) {
-      //set max velocity for the new size
-      switch (size - 1) {
-         case 2:
-         vel = AST_MAX_VEL_2;
-         accel = AST_MAX_AVEL_2;
-         break;
-         case 1:
-         vel = AST_MAX_VEL_1;
-         accel = AST_MAX_AVEL_1;
-         break;
-         default:
-         vel = AST_MAX_VEL_3;
-         accel = AST_MAX_AVEL_3;
-         break;
-      }
+   if (size > 1) {
+      //spawn 3 new asteroids
+	   for(int i = 0; i < 3; i++) {
+         //set max velocity for the new size
+         switch (size - 1) {
+            case 2:
+            vel = AST_MAX_VEL_2;
+            accel = AST_MAX_AVEL_2;
+            break;
+            case 1:
+            vel = AST_MAX_VEL_1;
+            accel = AST_MAX_AVEL_1;
+            break;
+            default:
+            vel = AST_MAX_VEL_3;
+            accel = AST_MAX_AVEL_3;
+            break;
+         }
       
-      asteroids = createAsteroid(
-         pos->x,                                         //x pos
-         pos->y,                                         //y pos
-         (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //x vel
-         (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //y vel
-         rand() % 360,                                   //angle
-         (rand() % (int8_t)(accel * 10)) / 5.0 - accel,  //accel
-         size - 1,                                       //size
-         asteroids);                                     //next asteroid
-   }
+         asteroids = createAsteroid(
+            pos->x,                                         //x pos
+            pos->y,                                         //y pos
+            (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //x vel
+            (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //y vel
+            rand() % 360,                                   //angle
+            (rand() % (int8_t)(accel * 10)) / 5.0 - accel,  //accel
+            size - 1,                                       //size
+            asteroids);                                     //next asteroid
+      }
+   }      
 }																																		
