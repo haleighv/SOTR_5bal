@@ -28,7 +28,6 @@
 #include "semphr.h"
 #include "graphics.h"
 #include "usart.h"
-//#include "shares.h"
 
 //Asteroid images
 const char *astImages[] = {
@@ -37,11 +36,13 @@ const char *astImages[] = {
 	"a3.png"
 };
 
+//represents a point on the screen
 typedef struct {
 	float x;
 	float y;
 } point;
 
+//object is used to represent the ship, bullets, and asteroids 
 typedef struct object_s {
 	xSpriteHandle handle;
 	point pos;
@@ -100,6 +101,8 @@ static xTaskHandle updateTaskHandle;
 static xSemaphoreHandle usartMutex;
 
 static object ship;
+
+//linked lists for asteroids and bullets
 static object *bullets = NULL;
 static object *asteroids = NULL;
 
@@ -159,24 +162,32 @@ void bulletTask(void *vParam) {
      * The ship's position is stored in ship.pos.x and ship.pos.y
      *
      * You will need to use the following code to add a new bullet:
-     bullets = createBullet(x, y, vx, vy, bullets);
+     * bullets = createBullet(x, y, vx, vy, bullets);
      */
 	// variable to hold ticks value of last task run
 	portTickType xLastWakeTime;
+   
 	// Initialize the xLastWakeTime variable with the current time.
 	xLastWakeTime = xTaskGetTickCount();
 
     while (1) {
 	    if(SHOOT_BUTTON) {
 		    xSemaphoreTake(usartMutex, portMAX_DELAY);
-			//Make a new bullet and add to linked list
-		    bullets = createBullet(ship.pos.x, ship.pos.y, -sin(ship.angle*DEG_TO_RAD)*BULLET_VEL, -cos(ship.angle*DEG_TO_RAD)*BULLET_VEL, bullets);
-			xSemaphoreGive(usartMutex);
-		    vTaskDelay(BULLET_DELAY_MS/portTICK_RATE_MS);
-	    }
-		else
+			 
+          //Make a new bullet and add to linked list
+		    bullets = createBullet(
+            ship.pos.x,
+            ship.pos.y, 
+            -sin(ship.angle*DEG_TO_RAD)*BULLET_VEL, 
+            -cos(ship.angle*DEG_TO_RAD)*BULLET_VEL,
+             bullets);
+			
+         xSemaphoreGive(usartMutex);
+         vTaskDelay(BULLET_DELAY_MS/portTICK_RATE_MS);
+      }
+      else
 			vTaskDelay(FRAME_DELAY_MS / portTICK_RATE_MS);
-    }
+   }
 }
 
 /*------------------------------------------------------------------------------
@@ -194,12 +205,14 @@ void updateTask(void *vParam) {
 	float vel;
 	object *objIter, *objPrev;
 	for (;;) {
+      
 		// spin ship
 		ship.angle += ship.a_vel;
 		if (ship.angle >= 360)
          ship.angle -= 360;
 		else if (ship.angle < 0)
 		   ship.angle += 360;
+         
 		// move ship
 		ship.vel.x += ship.accel * -sin(ship.angle * DEG_TO_RAD);
 		ship.vel.y += ship.accel * -cos(ship.angle * DEG_TO_RAD);
@@ -221,6 +234,7 @@ void updateTask(void *vParam) {
 		} else if (ship.pos.y > SCREEN_H) {
 			ship.pos.y -= SCREEN_H;
 		}
+      
 		// move bullets
 		objPrev = NULL;
 		objIter = bullets;
@@ -263,22 +277,27 @@ void updateTask(void *vParam) {
 		// move asteroids
 		objPrev = NULL;
 		objIter = asteroids;
+      //iterate through asteroids linked list
 		while (objIter != NULL) {
+         //update position from velocity
 			objIter->pos.x += objIter->vel.x;
 			objIter->pos.y += objIter->vel.y;
-      
+         
+         //wrap around horizontal edges
 			if (objIter->pos.x < 0.0) {
 				objIter->pos.x += SCREEN_W;
 			} else if (objIter->pos.x > SCREEN_W) {
 				objIter->pos.x -= SCREEN_W;
 			}
-      
+         
+         //wrap around vertical edges
 			if (objIter->pos.y < 0.0) {
 				objIter->pos.y += SCREEN_H;
 			} else if (objIter->pos.y > SCREEN_H) {
 				objIter->pos.y -= SCREEN_H;
 			}
-      
+         
+         //move to the next asteroid on the list
 			objPrev = objIter;
 			objIter = objIter->next;
 		}
@@ -485,9 +504,9 @@ void reset(void) {
      *	}
      */
 	object *nextObject;
+   
 	// removes asteroids
 	while (asteroids != NULL) {
-      
 		vSpriteDelete(asteroids->handle);
 		nextObject = asteroids->next;
 		vPortFree(asteroids);
@@ -503,7 +522,10 @@ void reset(void) {
    	bullets = nextObject;
 	}
    
+   //removes the ship
    vSpriteDelete(ship.handle);
+   
+   //removes the background
    vSpriteDelete(background);
 }
 
@@ -548,51 +570,36 @@ object *createAsteroid(float x, float y, float velx, float vely, int16_t angle, 
      * Add new asteroid to the group "astGroup" using:
      *	vGroupAddSprite() 
      */
-      //char *debug;
-      //int d1 = velx;            // Get the integer part (678).
-      //float f2 = velx - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
-      ////int d2 = trunc(f2 * 10000);   // Turn into integer (123).
-      //int d2 = (int)(f2 * 10000); // Or this one: Turn into integer.
-//
-      //// Print as parts, note that you need 0-padding for fractional bit.
-      //// Since d1 is 678 and d2 is 123, you get "678.0123".
-      //sprintf (debug, "velx = %d.%04d\n", d1, d2);
-      //
-      ////sprintf(debug, "velx: %d.%d, vely: %d.%d", (int)velx, ,vely);
-      //vPrint(debug);
-      
+      //allocate space for a new asteroid
       object *newAsteroid = pvPortMalloc(sizeof(object));
       
+      //setup asteroid sprite
       newAsteroid->handle = xSpriteCreate(
          astImages[rand() % 3],  //reference to png filename
-         x,          //xPos
-         y,          //yPos
-         angle,                      //rAngle
+         x,                      //xPos
+         y,                      //yPos
+         angle,                  //rAngle
          sizeToPix(size),        //width
          sizeToPix(size),        //height
          1);                     //depth
       
+      //set position
       newAsteroid->pos.x = x;
       newAsteroid->pos.y = y;
+      //set velocity
       newAsteroid->vel.x = velx;
       newAsteroid->vel.y = vely;
+      //set angle
       newAsteroid->angle = angle;
+      //set angular acceleration
       newAsteroid->a_vel = avel;
       newAsteroid->size = size;
-      
+      //link to asteroids list
       newAsteroid->next = asteroids;
-      
-      //xSpriteHandle handle;
-      //point pos;
-      //point vel;
-      //float accel;
-      //int16_t angle;
-      //int8_t a_vel;
-      //uint8_t size;
-      //uint16_t life;
-      //struct object_s *next;
+      //add to asteroids sprite group
       vGroupAddSprite(astGroup, newAsteroid->handle);
       
+      //return pointer to new asteroid
       return newAsteroid;
 }
 
@@ -641,21 +648,27 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
 	//Create a new sprite using xSpriteCreate()
 	newBullet->handle = xSpriteCreate(
 	"bullet.png",			//reference to png filename
-	x,                      //xPos
-	y,                      //yPos
-	ship.angle,             //rAngle
+	x,                   //xPos
+	y,                   //yPos
+	ship.angle,          //rAngle
 	BULLET_SIZE,			//width
 	BULLET_SIZE,			//height
-	1);                     //depth
-
+	1);                  //depth
+   
+   //set position
    newBullet->pos.x = x;
    newBullet->pos.y = y;
+   //set velocity
    newBullet->vel.x = velx;
    newBullet->vel.y = vely;
+   //set size
    newBullet->size = BULLET_SIZE;
+   //set bullets life
    newBullet->life = 0;
+   //link to bullets list
    newBullet->next = nxt;
-
+   
+   //return pointer to the new bullet
    return (newBullet); 
 }
 
@@ -676,31 +689,33 @@ void spawnAsteroid(point *pos, uint8_t size) {
      * Use createAsteroid()
      */
    int vel, accel;
-   if (size > 1) {
+   
+   //spawn 3 new asteroids
+	for(int i = 0; i < 3; i++) {
+      //set max velocity for the new size
       switch (size - 1) {
          case 2:
-            vel = AST_MAX_VEL_2;
-            accel = AST_MAX_AVEL_2;
-            break;
+         vel = AST_MAX_VEL_2;
+         accel = AST_MAX_AVEL_2;
+         break;
          case 1:
-            vel = AST_MAX_VEL_1;
-            accel = AST_MAX_AVEL_1;
-            break;
+         vel = AST_MAX_VEL_1;
+         accel = AST_MAX_AVEL_1;
+         break;
          default:
-            vel = AST_MAX_VEL_3;
-            accel = AST_MAX_AVEL_3;
-            break;
+         vel = AST_MAX_VEL_3;
+         accel = AST_MAX_AVEL_3;
+         break;
       }
-		for(int i = 0; i < 3; i++) {
-         asteroids = createAsteroid(
-            pos->x,                                         //x pos
-            pos->y,                                         //y pos
-            (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //x vel
-            (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //y vel
-            rand() % 360,                                   //angle
-            (rand() % (int8_t)(accel * 10)) / 5.0 - accel,  //accel
-            size - 1,                                       //size
-            asteroids);                                     //next asteroid
-      }
+      
+      asteroids = createAsteroid(
+         pos->x,                                         //x pos
+         pos->y,                                         //y pos
+         (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //x vel
+         (rand() % (int8_t)(vel * 10)) / 5.0 - vel,      //y vel
+         rand() % 360,                                   //angle
+         (rand() % (int8_t)(accel * 10)) / 5.0 - accel,  //accel
+         size - 1,                                       //size
+         asteroids);                                     //next asteroid
    }
 }																																		
