@@ -1,6 +1,5 @@
 /***************************
-*
-* Filename: usart.cpp
+* Filename: usart.c
 *
 * Description: Provides print methods for various
 *  datatypes using USART.
@@ -8,30 +7,28 @@
 * Authors: Doug Gallatin and Jason Schray
 * Edited by: Tim Peters & James Humphrey
 *
+* Revisions:
+* 5/10/12 HAV implemented queue usage in transmit function
 ***************************/
-
 #include "FreeRTOS.h"
 #include "semphr.h"
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <avr/io.h>
-
-
 #include "usart.h"
 #include "shares.h"
+
+xQueueHandle xQueue;
+
 /************************************
-* Procedure: usart_init
-*  
-* Description: Initializes the USART module with 
+* Function: usart_init
+*
+* Description: Initializes the USART module with
 *  the specified baud rate and clk speed.
 *
 * Param buadin: The desired Baud rate.
 * Param clk_seedin: The clk speed of the ATmega328p
 ************************************/
-
-xQueueHandle xQueue;
-
 void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
     uint32_t ubrr = clk_speedin/(16UL)/baudin-1;
     UBRR0H = (unsigned char)(ubrr>>8) ;// & 0x7F;
@@ -45,17 +42,26 @@ void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
 	xQueue = xQueueCreate( 100, sizeof( uint8_t ));
 }
 
-/*the send function will put 8bits on the trans line. */
-void USART_Write(uint8_t data)
-{
+/************************************
+* Function: USART_Write
+*
+* Description: Adds a byte of data to 
+*			   the back of a queue.
+*
+* Param data: 8bit data value
+************************************/
+void USART_Write(uint8_t data) {
 	xQueueSendToBack( xQueue, &data, 0);
-	/* Wait for empty transmit buffer */
-	//while ( !( UCSR0A & (1<<UDRE0)) );
-	/* Put data into buffer, sends the data */
-	//UDR0 = data;
 }
 
-/*the send function will put 8bits on the trans line. */
+/************************************
+* Function: USART_Write_Unprotected
+*
+* Description:Transmits a byte of data 
+*			  via UART
+*
+* Param data: 8bit data value
+************************************/
 void USART_Write_Unprotected(uint8_t data) {
 	/* Wait for empty transmit buffer */
 	while ( !( UCSR0A & (1<<UDRE0)) );
@@ -63,12 +69,19 @@ void USART_Write_Unprotected(uint8_t data) {
 	UDR0 = data;
 }
 
-/* the receive data function. Note that this a blocking call
-Therefore you may not get control back after this is called 
-until a much later time. It may be helpful to use the 
-istheredata() function to check before calling this function
-        @return 8bit data packet from sender
-*/
+/************************************
+* Function: USART_Read
+*
+* Description:the receive data function. 
+*        Note that this a blocking call
+*        Therefore you may not get control 
+*        back after this is called until a 
+*        much later time. It may be helpful 
+*        to use the istheredata() function 
+*        to check before calling this function.
+*
+* Return UDR0: Received data
+************************************/
 uint8_t USART_Read(void) {
     /* Wait for data to be received */
     while ( !(UCSR0A & (1<<RXC0)) );
@@ -76,26 +89,19 @@ uint8_t USART_Read(void) {
     return UDR0;
 }
 
-
-
-/*------------------------------------------------------------------------------
- * Function: USART_Write_Task
- *
- * Description: Sends queued data over UART
- *
- * param vParam: This parameter is not used.
- *----------------------------------------------------------------------------*/
+/************************************
+* Function: USART_Write_Task
+*
+* Description: Sends queued data over UART
+*
+* Param vParam: This parameter is not used.
+************************************/
 void USART_Write_Task(void *vParam) {
 	uint8_t uart_data;
 	portBASE_TYPE xStatus;
 	
     while (1) {
 		xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
-
-			/* Wait for empty transmit buffer */
-			while ( !( UCSR0A & (1<<UDRE0)) );
-			/* Put data into buffer, sends the data */
-			UDR0 = uart_data;
-			//USART_Write_Unprotected(uart_data);
-	}
+		USART_Write_Unprotected(uart_data);
+	}	
 }

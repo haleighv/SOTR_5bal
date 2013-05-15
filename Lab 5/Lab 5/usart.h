@@ -1,9 +1,8 @@
 /***************************
-*
 * Filename: usart.h
 *
 * Description: Provides print methods for various
-*  datatypes using USART.
+*              datatypes using USART.
 *
 * Authors: Doug Gallatin and Jason Schray
 *
