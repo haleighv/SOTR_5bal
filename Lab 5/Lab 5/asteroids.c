@@ -28,7 +28,7 @@
 #include "semphr.h"
 #include "graphics.h"
 #include "usart.h"
-#include "shares.h"
+//#include "shares.h"
 
 //Asteroid images
 const char *astImages[] = {
@@ -405,8 +405,8 @@ int main(void) {
 	xTaskCreate(inputTask, (signed char *) "i", 80, NULL, 1, &inputTaskHandle);
 	xTaskCreate(bulletTask, (signed char *) "b", 250, NULL, 2, &bulletTaskHandle);
 	xTaskCreate(updateTask, (signed char *) "u", 200, NULL, 4, &updateTaskHandle);
-	xTaskCreate(drawTask, (signed char *) "d", 230, NULL, 3, NULL);
-	xTaskCreate(USART_Write_Task, (signed char *) "w", 150, NULL, 5, NULL);
+	xTaskCreate(drawTask, (signed char *) "d", 600, NULL, 3, NULL);
+	xTaskCreate(USART_Write_Task, (signed char *) "w", 200, NULL, 5, NULL);
 	
 	vTaskStartScheduler();
 	
@@ -643,7 +643,7 @@ object *createBullet(float x, float y, float velx, float vely, object *nxt) {
 	"bullet.png",			//reference to png filename
 	x,                      //xPos
 	y,                      //yPos
-	0,                      //rAngle
+	ship.angle,             //rAngle
 	BULLET_SIZE,			//width
 	BULLET_SIZE,			//height
 	1);                     //depth

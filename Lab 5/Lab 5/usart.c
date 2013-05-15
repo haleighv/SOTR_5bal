@@ -2,13 +2,14 @@
 * Filename: usart.c
 *
 * Description: Provides print methods for various
-*  datatypes using USART.
+*              datatypes using USART.
 *
 * Authors: Doug Gallatin and Jason Schray
 * Edited by: Tim Peters & James Humphrey
 *
 * Revisions:
 * 5/10/12 HAV implemented queue usage in transmit function
+* 5/10/12 HAV Added USART_Write_Task
 ***************************/
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -16,9 +17,8 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include "usart.h"
-#include "shares.h"
 
-xQueueHandle xQueue;
+xQueueHandle xUsartQueue;
 
 /************************************
 * Function: usart_init
@@ -39,7 +39,8 @@ void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
     UCSR0C = (1<<UCSZ01)|(1<<UCSZ00);
 	// clear U2X0 for Synchronous operation
     UCSR0A &= ~(1<<U2X0);
-	xQueue = xQueueCreate( 100, sizeof( uint8_t ));
+	
+	xUsartQueue = xQueueCreate( 150, sizeof( uint8_t ));
 }
 
 /************************************
@@ -51,7 +52,7 @@ void USART_Init(uint16_t baudin, uint32_t clk_speedin) {
 * Param data: 8bit data value
 ************************************/
 void USART_Write(uint8_t data) {
-	xQueueSendToBack( xQueue, &data, 0);
+	xQueueSendToBack( xUsartQueue, &data, 0);
 }
 
 /************************************
@@ -98,10 +99,8 @@ uint8_t USART_Read(void) {
 ************************************/
 void USART_Write_Task(void *vParam) {
 	uint8_t uart_data;
-	portBASE_TYPE xStatus;
-	
     while (1) {
-		xStatus = xQueueReceive( xQueue, &uart_data, portMAX_DELAY);
+		xQueueReceive( xUsartQueue, &uart_data, portMAX_DELAY);
 		USART_Write_Unprotected(uart_data);
 	}	
 }

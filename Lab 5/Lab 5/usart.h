@@ -6,9 +6,10 @@
 *
 * Authors: Doug Gallatin and Jason Schray
 *
+* Revisions:
+* 5/10/12 HAV Added USART_Write_Task
+*
 ***************************/
-#include "shares.h"
-
 #ifndef USART_H_
 #define USART_H_
 
